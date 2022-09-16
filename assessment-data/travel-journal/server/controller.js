@@ -24,11 +24,11 @@ module.exports = {
                 name varchar
             );
 
-            create table cities (
+            CREATE TABLE cities (
                 city_id serial primary key, 
                 name varchar(40),
                 rating integer,
-                country_id integer REFERENCE countries_id
+                country_id integer REFERENCE countries(countries_id)
 
             );
 
@@ -236,8 +236,8 @@ module.exports = {
 
     getCountries: (req, res) => {
         const {name, country_id} = req.body
-        sequelize.query(`select * from countries`)
-            .then(dbRes => res.status(200).send(dbRes[0]))
+        sequelize.query(`SELECT * FROM countries;`)
+            .then((dbRes) => {res.status(200).send(dbRes[0])})
             .catch(err => res.status(500).send(err))
     },
 
@@ -249,21 +249,30 @@ module.exports = {
 
     createCity: (req, res) => {
         const {name, rating, countryId} = req.body
-        sequelize.query(`insert into countries (name, rating, country_id)`)
-        .then(dbRes => res.status(200).send(dbRes[0]))
+        sequelize.query(`insert into cities (name, rating, country_id)
+        values ('${name}', ${rating}, ${countryId});`)
+        .then((dbRes) => {res.status(200).send(dbRes[0])})
+        .catch(err => res.status(500).send(err))
+    },
+    
+    getCities: (req, res) => {
+        sequelize.query(`
+        SELECT ci._city_id, ci.name AS city, ci.rating, co.cointry_id, co.name AS country 
+        FROM cities ci 
+        JOIN countries co ON ci.country_id = co.country_id;
+        `)
+        .then((dbRes) => {res.status(200).send(dbRes[0])})
         .catch(err => res.status(500).send(err))
     },
 
+    deleteCity: (req, res) => {
+        const {id} = req.params
 
-//  In controller.js, write a new function called getCities
-// Using sequelize.query query your database for columns from both the cities and countries tables. cities: city_id, name (alias ‘city), rating. countries: country_id, name (alias ‘country’). Make sure to spellcheck the aliases as well as the column names. Join the tables where country_id is equal.
-// Handle the promise with .then() passing in a callback: dbRes => res.status(200).send(dbRes[0]) (you can also add a .catch)
-    
-    createCity: (req, res) => {
-        
-    }
-
-
-
+        sequelize.query(`
+            DELETE FROM cities
+            WHERE city_id = ${id};`)
+            .then((dbRes) => {res.status(200).send(dbRes[0])})
+            .catch(err => res.status(500).send(err))
+    },
 
 }
